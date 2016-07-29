@@ -1,0 +1,11 @@
+{
+  "name": "elm-dep-check",
+  "version": "1.0.0",
+  "description": "Visualizing package dependencies of your Elm project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "jinjorweb@gmail.com",
+  "license": "MIT"
+}
