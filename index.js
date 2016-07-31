@@ -41,7 +41,7 @@ function getDeps(cb) {
         var imports = code.split('\n').filter((line) => {
           return line.startsWith('import');
         }).map((line) => {
-          var name = line.split('import')[1].split('exposing')[0].trim();
+          var name = line.split('import')[1].split('exposing')[0].split('as')[0].trim();
           return [name, myModules[name] || false];
         });
         return [ moduleName || 'Main', imports ];
