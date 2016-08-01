@@ -10,7 +10,6 @@ getDeps((e, data) => {
   if(e) {
     throw e;
   }
-  // console.log(data.deps);
 
   var depCheckSource = fs.readFileSync(__dirname + '/dest/dep-check.js', 'utf8');
   var template = fs.readFileSync(__dirname + '/dest/template.html', 'utf8');
@@ -27,9 +26,8 @@ function getDeps(cb) {
       var myModules = {};
       files.forEach(function(file) {
         var relPathSlash = slash(file).split(slash(srcDir + '/'))[1];
-        myModules[relPathSlash.replace(/\//, '.').replace(/\.elm/, '')] = true
+        myModules[relPathSlash.replace(/\//g, '.').replace(/\.elm/, '')] = true
       });
-      // console.log(myModules);
 
       var deps = files.map(function(file) {
         var code = fs.readFileSync(file, 'utf8');
