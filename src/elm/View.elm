@@ -3,6 +3,9 @@ module View exposing (view)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Set exposing (..)
+import Dict
+
+import Graph exposing (..)
 
 import Model exposing (..)
 import Styles as S
@@ -11,23 +14,55 @@ import Styles as S
 view : Model -> Html msg
 view model =
   let
+    graph =
+      makeGraph model.deps
+
     set =
       createSet model.deps
 
-    sorted =
-      sortDeps set model.deps
-
-    head =
-      List.map fst sorted
+    modNames =
+      sort graph
 
     body =
-      List.map (\(mod, _) ->
-        (mod, List.map (\(imp, mine) ->
+      List.map (\mod ->
+        (mod, List.map (\imp ->
           Set.member (mod, imp) set
-        ) sorted)
-      ) sorted
+        ) modNames)
+      ) modNames
   in
-    div [] (headRowView head :: bodyView body)
+    div [] (headRowView modNames :: bodyView body)
+
+
+makeGraph : List (String, List (String, Bool)) -> Graph String ()
+makeGraph deps =
+  let
+    depsWithId =
+      List.indexedMap (,) deps
+
+    dict =
+      Dict.fromList <|
+        List.map (\(id, (mod, _)) -> (mod, id)) depsWithId
+
+    (nodes, edges) =
+      List.foldl
+        (\(id, (mod, imps)) (nodes, edges) ->
+          ( Node id mod :: nodes
+          , List.filterMap (\(imp, _) ->
+                case Dict.get imp dict of
+                  Just impId -> Just (Edge id impId ())
+                  Nothing -> Nothing
+            ) imps ++ edges
+          )
+        )
+        ([], [])
+        depsWithId
+  in
+    Graph.fromNodesAndEdges nodes edges
+
+
+sort : Graph String () -> List String
+sort graph =
+  List.map (\nodeContext -> nodeContext.node.label) (Graph.topologicalSort graph)
 
 
 headRowView : List String -> Html msg
