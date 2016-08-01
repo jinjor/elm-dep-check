@@ -2,8 +2,8 @@ var fs = require('fs');
 var slash = require('slash');
 var recursive = require('recursive-readdir');
 
-var elmPackageJson = JSON.parse(fs.readFileSync(__dirname + '/elm-package.json', 'utf8'));
-var srcDir = __dirname + '/' + elmPackageJson['source-directories'][0];// TODO normalize, multi dir
+var elmPackageJson = JSON.parse(fs.readFileSync('./elm-package.json', 'utf8'));
+var srcDir = process.cwd() + '/' + elmPackageJson['source-directories'][0];// TODO normalize, multi dir
 
 
 getDeps((e, data) => {
@@ -12,11 +12,11 @@ getDeps((e, data) => {
   }
   // console.log(data.deps);
 
-  var depCheckSource = fs.readFileSync('./dest/depcheck.js', 'utf8');
-  var template = fs.readFileSync('./dest/template.html', 'utf8');
+  var depCheckSource = fs.readFileSync(__dirname + '/dest/dep-check.js', 'utf8');
+  var template = fs.readFileSync(__dirname + '/dest/template.html', 'utf8');
   var output = template.replace(/{{src}}/, depCheckSource).replace(/{{data}}/, JSON.stringify(data));
 
-  fs.writeFileSync(__dirname + '/depcheck.html', output);
+  fs.writeFileSync('./dep-check.html', output);
 });
 
 function getDeps(cb) {
