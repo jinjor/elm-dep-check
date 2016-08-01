@@ -23,6 +23,10 @@ function getDeps(cb) {
     if(e) {
       cb(e)
     } else {
+      files = files.filter((file) => {
+        return file.endsWith('.elm');
+      });
+
       var myModules = {};
       files.forEach(function(file) {
         var relPathSlash = slash(file).split(slash(srcDir + '/'))[1];
@@ -42,7 +46,8 @@ function getDeps(cb) {
           var name = line.split('import')[1].split('exposing')[0].split('as')[0].trim();
           return [name, myModules[name] || false];
         });
-        return [ moduleName || 'Main', imports ];
+        var altModName = slash(file).split('/').pop().split('.')[0];
+        return [ moduleName || altModName, imports ];
       });
       cb(null, {
         deps: deps
