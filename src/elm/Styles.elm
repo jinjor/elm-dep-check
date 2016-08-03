@@ -4,10 +4,13 @@ module Styles exposing (..)
 headerBgColor = "#ddd"
 
 
-labelLength = "200px"
-
+-- labelLength = "200px"
 
 cellWidth = "30px"
+
+
+px : number -> String
+px num = toString num ++ "px"
 
 
 row : List (String, String)
@@ -17,19 +20,19 @@ row =
   ]
 
 
-rowColHead : List (String, String)
-rowColHead =
+rowColHead : Int -> List (String, String)
+rowColHead labelLength =
   [ ("background-color", headerBgColor)
-  , ("width", labelLength)
-  , ("height", labelLength)
+  , ("width", px labelLength)
+  , ("height", px labelLength)
   , ("box-sizing", "border-box")
   ]
 
 
-rowHead : List (String, String)
-rowHead =
+rowHead : Int -> List (String, String)
+rowHead labelLength =
   [ ("background-color", headerBgColor)
-  , ("width", labelLength)
+  , ("width", px labelLength)
   , ("height", cellWidth)
   , ("line-height", cellWidth)
   , ("box-sizing", "border-box")
@@ -39,21 +42,21 @@ rowHead =
   ]
 
 
-colHead : List (String, String)
-colHead =
+colHead : Int -> List (String, String)
+colHead labelLength =
   [ ("background-color", headerBgColor)
   , ("width", cellWidth)
-  , ("height", labelLength)
+  , ("height", px labelLength)
   , ("box-sizing", "border-box")
   , ("margin-left", "1px")
   ]
 
 
-colHeadText : List (String, String)
-colHeadText =
-  [ ("transform", "rotate(-90deg) translate(-" ++ labelLength ++ ")")
+colHeadText : Int -> List (String, String)
+colHeadText labelLength =
+  [ ("transform", "rotate(-90deg) translate(-" ++ px labelLength ++ ")")
   , ("transform-origin", "top left")
-  , ("width", labelLength)
+  , ("width", px labelLength)
   , ("height", cellWidth)
   , ("padding-left", "5px")
   , ("line-height", cellWidth)

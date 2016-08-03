@@ -40,18 +40,24 @@ view model =
         ) modNames)
       ) modNames
 
+    modLabelLength =
+      (List.foldl Basics.max 0 (List.map String.length modNames)) * 15
+
     pkgBody =
       List.map (\mod ->
         (mod, List.map (\imp ->
           mod /= imp && Dict.member (mod, imp) pkgDeps
         ) pkgNames)
       ) pkgNames
+
+    pkgLabelLength =
+      (List.foldl Basics.max 0 (List.map String.length pkgNames)) * 15
   in
     div
       []
-      [ div [] (headRowView pkgNames :: bodyView pkgBody)
+      [ div [] (headRowView pkgLabelLength pkgNames :: bodyView pkgLabelLength pkgBody)
       , hr [] []
-      , div [] (headRowView modNames :: bodyView modBody)
+      , div [] (headRowView modLabelLength modNames :: bodyView modLabelLength modBody)
       ]
 
 
@@ -119,30 +125,36 @@ sort graph =
   List.map (\nodeContext -> nodeContext.node.label) (Graph.topologicalSort graph)
 
 
-headRowView : List String -> Html msg
-headRowView imps =
+headRowView : Int -> List String -> Html msg
+headRowView labelLength imps =
   div [ style S.row ] (
-    div [ style S.rowColHead ] [] ::
-    List.map (\imp -> div [ style S.colHead ] [ div [ style S.colHeadText ] [ text imp ] ]) imps
+    div [ style (S.rowColHead labelLength) ] [] ::
+    List.map (\imp ->
+      div
+        [ style (S.colHead labelLength) ]
+        [ div [ style (S.colHeadText labelLength) ] [ text imp ] ]
+    ) imps
   )
 
 
-bodyView : List (String, List Bool) -> List (Html msg)
-bodyView mods =
-  List.map bodyRowView mods
+bodyView : Int -> List (String, List Bool) -> List (Html msg)
+bodyView labelLength mods =
+  List.map (bodyRowView labelLength) mods
 
 
-bodyRowView : (String, List Bool) -> Html msg
-bodyRowView (mod, imps) =
+bodyRowView : Int -> (String, List Bool) -> Html msg
+bodyRowView labelLength (mod, imps) =
   div [ style S.row ] (
-    div [ style S.rowHead ] [ text mod ] ::
+    div [ style (S.rowHead labelLength) ] [ text mod ] ::
     List.map cellView imps
   )
 
 
 cellView : Bool -> Html msg
 cellView imp =
-  div [ style (S.cell imp) ] [ text (if imp then "1" else "0" ) ]
+  div
+    [ style (S.cell imp) ]
+    [ text (if imp then "1" else "0" ) ]
 
 
 createSet : List (String, List (String, Bool)) -> Set (String, String)
