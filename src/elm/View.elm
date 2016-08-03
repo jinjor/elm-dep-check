@@ -24,21 +24,35 @@ view model =
     modNames =
       sort modGraph
 
+    (packages, pkgDeps) =
+      createPackageDeps model.deps
+
     pkgGraph =
-      makePackageGraph
-        (createPackageDeps model.deps)
+      makePackageGraph (packages, pkgDeps)
 
     pkgNames =
       sort pkgGraph
 
-    body =
+    modBody =
       List.map (\mod ->
         (mod, List.map (\imp ->
           Set.member (mod, imp) set
+        ) modNames)
+      ) modNames
+
+    pkgBody =
+      List.map (\mod ->
+        (mod, List.map (\imp ->
+          mod /= imp && Dict.member (mod, imp) pkgDeps
         ) pkgNames)
       ) pkgNames
   in
-    div [] (headRowView pkgNames :: bodyView body)
+    div
+      []
+      [ div [] (headRowView pkgNames :: bodyView pkgBody)
+      , hr [] []
+      , div [] (headRowView modNames :: bodyView modBody)
+      ]
 
 
 makeModuleGraph : List (String, List (String, Bool)) -> Graph String ()
@@ -174,7 +188,7 @@ createPackageDeps deps =
                 impPkg =
                   pkgName imp
               in
-                (if mine then
+                (if mine && modPkg /= impPkg then
                   Dict.update
                     (modPkg, impPkg)
                     (\value ->
