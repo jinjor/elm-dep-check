@@ -13,18 +13,11 @@ type alias Flags =
 
 main : Program Flags
 main = programWithFlags
-  { init = init
+  { init = \flags -> init flags.deps
   , update = update
   , subscriptions = always Sub.none
   , view = View.view
   }
-
-
-init : Flags -> (Model, Cmd Msg)
-init flags =
-  { deps = flags.deps
-  , hover = Nothing
-  } ! []
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
