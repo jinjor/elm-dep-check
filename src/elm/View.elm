@@ -2,6 +2,7 @@ module View exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Set exposing (..)
 import Dict exposing (..)
 import String
@@ -12,7 +13,7 @@ import Model exposing (..)
 import Styles as S
 
 
-view : Model -> Html msg
+view : Model -> Html Msg
 view model =
   let
     modGraph =
@@ -33,12 +34,15 @@ view model =
     pkgNames =
       sort pkgGraph
 
+    groupedModNames =
+      sortModuleAgain pkgNames modNames
+
     modBody =
       List.map (\mod ->
         (mod, List.map (\imp ->
           Set.member (mod, imp) set
-        ) modNames)
-      ) modNames
+        ) groupedModNames)
+      ) groupedModNames
 
     modLabelLength =
       (List.foldl Basics.max 0 (List.map String.length modNames)) * 15
@@ -52,13 +56,65 @@ view model =
 
     pkgLabelLength =
       (List.foldl Basics.max 0 (List.map String.length pkgNames)) * 15
+
+    isHovered tableName (rowIndex, colIndex) =
+      case model.hover of
+        Just (t, (r, c)) ->
+          t == tableName &&
+            if rowIndex == -1 then
+              c == colIndex
+            else if colIndex == -1 then
+              r == rowIndex
+            else
+              r == rowIndex || c == colIndex
+
+        Nothing ->
+          False
   in
     div
       []
-      [ div [] (headRowView pkgLabelLength pkgNames :: bodyView pkgLabelLength pkgBody)
+      [ div []
+        ( headRowView isHovered "packages" pkgLabelLength pkgNames ::
+          bodyView isHovered "packages" pkgLabelLength pkgBody
+        )
       , hr [] []
-      , div [] (headRowView modLabelLength modNames :: bodyView modLabelLength modBody)
+      , div []
+        ( headRowView isHovered "modules" modLabelLength groupedModNames ::
+          bodyView isHovered "modules" modLabelLength modBody
+        )
       ]
+
+
+sortModuleAgain : List String -> List String -> List String
+sortModuleAgain pkgNames modNames =
+  let
+    dict =
+      List.foldr
+        (\mod dict ->
+          let
+            pkg =
+              pkgName mod
+          in
+            Dict.update
+              pkg
+              (\value ->
+                case value of
+                  Just list ->
+                    Just (mod :: list)
+
+                  Nothing ->
+                    Just []
+              )
+              dict
+        )
+        Dict.empty
+        modNames
+
+    pkgList =
+      List.filterMap (flip Dict.get dict) pkgNames
+
+  in
+    List.concatMap identity pkgList
 
 
 makeModuleGraph : List (String, List (String, Bool)) -> Graph String ()
@@ -125,36 +181,61 @@ sort graph =
   List.map (\nodeContext -> nodeContext.node.label) (Graph.topologicalSort graph)
 
 
-headRowView : Int -> List String -> Html msg
-headRowView labelLength imps =
+headRowView : (String -> (Int, Int) -> Bool) -> String -> Int -> List String -> Html Msg
+headRowView isHovered tableName labelLength imps =
   div [ style S.row ] (
     div [ style (S.rowColHead labelLength) ] [] ::
-    List.map (\imp ->
-      div
-        [ style (S.colHead labelLength) ]
-        [ div [ style (S.colHeadText labelLength) ] [ text imp ] ]
+    List.indexedMap (\colIndex imp ->
+      let
+        state =
+          isHovered tableName (-1, colIndex)
+      in
+        div
+          [ style (S.colHead state labelLength)
+          , onMouseEnter (EnterCell tableName (-1, colIndex))
+          , onMouseLeave LeaveCell
+          ]
+          [ div [ style (S.colHeadText labelLength) ] [ text imp ] ]
     ) imps
   )
 
 
-bodyView : Int -> List (String, List Bool) -> List (Html msg)
-bodyView labelLength mods =
-  List.map (bodyRowView labelLength) mods
+bodyView : (String -> (Int, Int) -> Bool) -> String -> Int -> List (String, List Bool) -> List (Html Msg)
+bodyView isHovered tableName labelLength mods =
+  List.indexedMap (bodyRowView isHovered tableName labelLength) mods
 
 
-bodyRowView : Int -> (String, List Bool) -> Html msg
-bodyRowView labelLength (mod, imps) =
+bodyRowView : (String -> (Int, Int) -> Bool) -> String -> Int -> Int -> (String, List Bool) -> Html Msg
+bodyRowView isHovered tableName labelLength rowIndex (mod, imps) =
   div [ style S.row ] (
-    div [ style (S.rowHead labelLength) ] [ text mod ] ::
-    List.map cellView imps
+    div
+      [ style (S.rowHead (isHovered tableName (rowIndex, -1)) labelLength)
+      , onMouseEnter (EnterCell tableName (rowIndex, -1))
+      , onMouseLeave LeaveCell
+      ] [ text mod ] ::
+    List.indexedMap (cellView isHovered tableName rowIndex) imps
   )
 
 
-cellView : Bool -> Html msg
-cellView imp =
-  div
-    [ style (S.cell imp) ]
-    [ text (if imp then "1" else "0" ) ]
+cellView : (String -> (Int, Int) -> Bool) -> String -> Int -> Int -> Bool -> Html Msg
+cellView isHovered tableName rowIndex colIndex imp =
+  let
+    cellOption =
+      if imp && rowIndex > colIndex then
+        S.Warning
+      else if imp then
+        S.Exists
+      else if isHovered tableName (rowIndex, colIndex) then
+        S.Hovered
+      else
+        S.None
+  in
+    div
+      [ style (S.cell cellOption)
+      , onMouseEnter (EnterCell tableName (rowIndex, colIndex))
+      , onMouseLeave LeaveCell
+      ]
+      [ text (if imp then "1" else "0" ) ]
 
 
 createSet : List (String, List (String, Bool)) -> Set (String, String)

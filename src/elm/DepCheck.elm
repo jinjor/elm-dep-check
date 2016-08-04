@@ -20,18 +20,18 @@ main = programWithFlags
   }
 
 
-type alias Model =
-  { deps : List (String, List (String, Bool)) }
-
-
-type Msg = NoOp
-
-
 init : Flags -> (Model, Cmd Msg)
 init flags =
-  { deps = flags.deps } ! []
+  { deps = flags.deps
+  , hover = Nothing
+  } ! []
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-  model ! []
+  case msg of
+    EnterCell tableName (rowIndex, colIndex) ->
+      { model | hover = Just (tableName, (rowIndex, colIndex)) } ! []
+
+    LeaveCell ->
+      { model | hover = Nothing } ! []
