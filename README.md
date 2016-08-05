@@ -1,15 +1,17 @@
 # elm-dep-check
 
-Visualizing module dependencies of your Elm project.
+Visualizing module dependencies of Elm projects.
 
 ![](image.png)
+
+## Features
 
 * Visualize dependencies among modules/directories
 * Detect circular dependencies among directories
 
-Circular module dependencies are detected by Elm compiler, but in general, keeping directory dependencies unidirectional makes your project healthy!
+Circular module dependencies are detected by Elm compiler, but in general, it also makes your project healthy to keep directory dependencies unidirectional!
 
-It is also good to check your project's local rules are observed (e.g. `View.*` should not used by `Model.*`).
+It is also good to check your project's local rules are observed (e.g. `View.*` should not be used by `Model.*`).
 
 
 ## Install
