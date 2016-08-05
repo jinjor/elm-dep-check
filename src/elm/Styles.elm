@@ -2,7 +2,7 @@ module Styles exposing (..)
 
 
 type CellState =
-  Warning | Exists | Hovered | None
+  Warning | Exists | Hovered | None Bool
 
 
 headerBgColor : Bool -> String
@@ -19,21 +19,23 @@ cellBgColor state =
     Exists -> "#6d4"
     Warning -> "#d64"
     Hovered -> "#bcd"
-    None -> "#eee"
+    None colored ->
+      if colored then "#ddd" else "#eee"
 
 
-cellWidth : String
-cellWidth = "30px"
+cellWidth : Int
+cellWidth = 30
 
 
 px : number -> String
 px num = toString num ++ "px"
 
 
-row : List (String, String)
-row =
+row : Int -> Int -> List (String, String)
+row labelLength length =
   [ ("display", "flex")
-  , ("margin-bottom", "1px")
+  , ("border-bottom", "solid 1px #fff")
+  , ("width", px (labelLength + length * cellWidth))
   ]
 
 
@@ -43,6 +45,7 @@ rowColHead labelLength =
   , ("width", px labelLength)
   , ("height", px labelLength)
   , ("box-sizing", "border-box")
+  , ("border-right", "solid 1px #fff")
   ]
 
 
@@ -50,10 +53,10 @@ rowHead : Bool -> Int -> List (String, String)
 rowHead hover labelLength =
   [ ("background-color", headerBgColor hover)
   , ("width", px labelLength)
-  , ("height", cellWidth)
-  , ("line-height", cellWidth)
+  , ("height", px cellWidth)
+  , ("line-height", px cellWidth)
   , ("box-sizing", "border-box")
-  , ("margin-right", "1px")
+  , ("border-right", "solid 1px #fff")
   , ("text-align", "right")
   , ("padding-right", "5px")
   ]
@@ -62,10 +65,10 @@ rowHead hover labelLength =
 colHead : Bool -> Int -> List (String, String)
 colHead hover labelLength =
   [ ("background-color", headerBgColor hover)
-  , ("width", cellWidth)
+  , ("width", px cellWidth)
   , ("height", px labelLength)
   , ("box-sizing", "border-box")
-  , ("margin-left", "1px")
+  , ("border-right", "solid 1px #fff")
   ]
 
 
@@ -74,19 +77,19 @@ colHeadText labelLength =
   [ ("transform", "rotate(-90deg) translate(-" ++ px labelLength ++ ")")
   , ("transform-origin", "top left")
   , ("width", px labelLength)
-  , ("height", cellWidth)
+  , ("height", px cellWidth)
   , ("padding-left", "5px")
-  , ("line-height", cellWidth)
+  , ("line-height", px cellWidth)
   ]
 
 
 cell : CellState -> List (String, String)
 cell state =
-  [ ("width", cellWidth)
-  , ("height", cellWidth)
-  , ("line-height", cellWidth)
+  [ ("width", px cellWidth)
+  , ("height", px cellWidth)
+  , ("line-height", px cellWidth)
   , ("text-align", "center")
   , ("background-color", cellBgColor state)
   , ("box-sizing", "border-box")
-  , ("margin-right", "1px")
+  , ("border-right", "solid 1px #fff")
   ]

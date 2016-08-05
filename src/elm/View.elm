@@ -17,25 +17,26 @@ import Styles as S
 
 view : Model -> Html Msg
 view model =
-  div
-    []
-    [ tableView
-        model.hover
-        "packages"
-        model.pkgLabelLength
-        model.pkgNames
-        model.pkgBody
-    , hr [] []
-    , tableView
-        model.hover
-        "modules"
-        model.modLabelLength
-        model.groupedModNames
-        model.modBody
-    ]
+    div
+      []
+      [ h2 [] [ text "Directories" ]
+      , tableView
+          model.hover
+          "directories"
+          model.dirLabelLength
+          model.dirNames
+          model.dirBody
+      , h2 [] [ text "Modules" ]
+      , tableView
+          model.hover
+          "modules"
+          model.modLabelLength
+          model.groupedModNames
+          model.modBody
+      ]
 
 
-tableView : Maybe (String, (Int, Int)) -> String -> Int -> List String -> List (String, List Bool) -> Html Msg
+tableView : Maybe (String, (Int, Int)) -> String -> Int -> List String -> List (String, List ((Int, Int), Bool)) -> Html Msg
 tableView hoverState tableName labelLength names body =
   div []
     ( headRowView (isHovered hoverState) tableName labelLength names ::
@@ -61,7 +62,7 @@ isHovered hoverState tableName (rowIndex, colIndex) =
 
 headRowView : (String -> (Int, Int) -> Bool) -> String -> Int -> List String -> Html Msg
 headRowView isHovered tableName labelLength imps =
-  Keyed.node "div" [ style S.row ] (
+  Keyed.node "div" [ style (S.row labelLength (List.length imps)) ] (
     ("cell-head-head", rowColheadView labelLength) ::
     List.indexedMap (\colIndex imp ->
       let
@@ -90,19 +91,27 @@ rowColheadView labelLength =
   div [ style (S.rowColHead labelLength) ] []
 
 
-bodyView : (String -> (Int, Int) -> Bool) -> String -> Int -> List (String, List Bool) -> List (Html Msg)
+bodyView : (String -> (Int, Int) -> Bool) -> String -> Int -> List (String, List ((Int, Int), Bool)) -> List (Html Msg)
 bodyView isHovered tableName labelLength mods =
-  List.indexedMap (bodyRowView isHovered tableName labelLength) mods
+  List.indexedMap
+    (bodyRowView isHovered tableName labelLength (List.length mods))
+    mods
 
 
-bodyRowView : (String -> (Int, Int) -> Bool) -> String -> Int -> Int -> (String, List Bool) -> Html Msg
-bodyRowView isHovered tableName labelLength rowIndex (mod, imps) =
-  Keyed.node "div" [ style S.row ] (
-    ( "cell-" ++ toString rowIndex ++ "-head"
-    , bodyRowHeadView isHovered tableName labelLength rowIndex mod
-    ) ::
-    List.indexedMap (cellView isHovered tableName rowIndex) imps
-  )
+bodyRowView : (String -> (Int, Int) -> Bool) -> String -> Int -> Int -> Int -> (String, List ((Int, Int), Bool)) -> Html Msg
+bodyRowView isHovered tableName labelLength length rowIndex (mod, imps) =
+  let
+    head =
+      ( "cell-" ++ toString rowIndex ++ "-head"
+      , bodyRowHeadView isHovered tableName labelLength rowIndex mod
+      )
+
+    tail =
+      List.indexedMap
+        (cellView isHovered tableName rowIndex)
+        imps
+  in
+    Keyed.node "div" [ style (S.row labelLength length) ] (head :: tail)
 
 
 bodyRowHeadView : (String -> (Int, Int) -> Bool) -> String -> Int -> Int -> String -> Html Msg
@@ -114,24 +123,24 @@ bodyRowHeadView isHovered tableName labelLength rowIndex mod =
     ] [ text mod ]
 
 
-cellView : (String -> (Int, Int) -> Bool) -> String -> Int -> Int -> Bool -> (String, Html Msg)
-cellView isHovered tableName rowIndex colIndex imp =
+cellView : (String -> (Int, Int) -> Bool) -> String -> Int -> Int -> ((Int, Int), Bool) -> (String, Html Msg)
+cellView isHovered tableName rowIndex colIndex ((dirY, dirX), exists) =
   let
     cellState =
-      if imp && rowIndex > colIndex then
+      if exists && rowIndex > colIndex then
         S.Warning
-      else if imp then
+      else if exists then
         S.Exists
       else if isHovered tableName (rowIndex, colIndex) then
         S.Hovered
       else
-        S.None
+        S.None ((dirX + dirY) % 2 == 1)
 
     key =
       "cell-" ++ toString rowIndex ++ "-" ++ toString colIndex
 
     text =
-      if imp then "1" else "0"
+      if exists then "1" else "0"
 
     html =
       lazy3 cellViewHelp cellState tableName (rowIndex, colIndex, text)

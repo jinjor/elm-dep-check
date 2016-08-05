@@ -1,7 +1,7 @@
 {
   "name": "elm-dep-check",
   "version": "1.0.0",
-  "description": "Visualizing package dependencies of your Elm project",
+  "description": "Visualizing directory dependencies of your Elm project",
   "main": "index.js",
   "bin": "./bin/elm-dep-check",
   "scripts": {

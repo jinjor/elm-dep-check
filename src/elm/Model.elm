@@ -9,12 +9,12 @@ import Graph exposing (..)
 
 type alias Model =
   { deps : List (String, List (String, Bool))
-  , pkgLabelLength : Int
-  , pkgNames : List String
-  , pkgBody : List (String, List Bool)
+  , dirLabelLength : Int
+  , dirNames : List String
+  , dirBody : List (String, List ((Int, Int), Bool))
   , modLabelLength : Int
   , groupedModNames : List String
-  , modBody : List (String, List Bool)
+  , modBody : List (String, List ((Int, Int), Bool))
   , hover : Maybe (String, (Int, Int))
   }
 
@@ -36,48 +36,68 @@ init deps =
     modNames =
       sort modGraph
 
-    (packages, pkgDeps) =
+    (directories, dirDeps) =
       createPackageDeps deps
 
-    pkgGraph =
-      makePackageGraph (packages, pkgDeps)
+    dirGraph =
+      makePackageGraph (directories, dirDeps)
 
-    pkgNames =
-      sort pkgGraph
+    dirNames =
+      sort dirGraph
 
     groupedModNames =
-      sortModuleAgain pkgNames modNames
+      sortModuleAgain dirNames modNames
+
+    dirIndexOf mod imp =
+      ( indexOf (dirName mod) dirNames
+      , indexOf (dirName imp) dirNames
+      )
 
     modBody =
       List.map (\mod ->
         (mod, List.map (\imp ->
-          Set.member (mod, imp) set
+          (dirIndexOf mod imp, Set.member (mod, imp) set)
         ) groupedModNames)
       ) groupedModNames
 
     modLabelLength =
       (List.foldl Basics.max 0 (List.map String.length modNames)) * 15
 
-    pkgBody =
+    dirBody =
       List.map (\mod ->
         (mod, List.map (\imp ->
-          mod /= imp && Dict.member (mod, imp) pkgDeps
-        ) pkgNames)
-      ) pkgNames
+          ((0, 0), mod /= imp && Dict.member (mod, imp) dirDeps)
+        ) dirNames)
+      ) dirNames
 
-    pkgLabelLength =
-      (List.foldl Basics.max 0 (List.map String.length pkgNames)) * 15
-
+    dirLabelLength =
+      (List.foldl Basics.max 0 (List.map String.length dirNames)) * 15
   in
     { deps = deps
-    , pkgLabelLength = pkgLabelLength
-    , pkgNames = pkgNames
-    , pkgBody = pkgBody
+    , dirLabelLength = dirLabelLength
+    , dirNames = dirNames
+    , dirBody = dirBody
     , modLabelLength = modLabelLength
     , groupedModNames = groupedModNames
     , modBody = modBody
     , hover = Nothing
     } ! []
+
+
+indexOf : a -> List a -> Int
+indexOf a list =
+  indexOfHelp 0 a list
+
+
+indexOfHelp : Int -> a -> List a -> Int
+indexOfHelp index a list =
+  case list of
+    [] -> -1
+    x :: xs ->
+      if a == x then
+        index
+      else
+        indexOfHelp (index + 1) a xs
 
 
 createSet : List (String, List (String, Bool)) -> Set (String, String)
@@ -95,11 +115,11 @@ createPackageDeps : List (String, List (String, Bool))
      )
 createPackageDeps deps =
   let
-    packages =
+    directories =
       List.foldl (\(mod, _) dict ->
         let
           modPkg =
-            pkgName mod
+            dirName mod
         in
           Dict.update
             modPkg
@@ -111,17 +131,17 @@ createPackageDeps deps =
             dict
       ) Dict.empty deps
 
-    pkgDeps =
+    dirDeps =
       List.foldl (\(mod, imps) dict ->
         let
           modPkg =
-            pkgName mod
+            dirName mod
         in
           List.foldl
             (\(imp, mine) dict ->
               let
                 impPkg =
-                  pkgName imp
+                  dirName imp
               in
                 (if mine && modPkg /= impPkg then
                   Dict.update
@@ -137,11 +157,11 @@ createPackageDeps deps =
             ) dict imps
       ) Dict.empty deps
   in
-    (packages, pkgDeps)
+    (directories, dirDeps)
 
 
-pkgName : String -> String
-pkgName modName =
+dirName : String -> String
+dirName modName =
   case List.reverse (String.split "." modName) of
     [] -> ""
     x :: [] -> ""
@@ -156,17 +176,17 @@ sort graph =
 
 
 sortModuleAgain : List String -> List String -> List String
-sortModuleAgain pkgNames modNames =
+sortModuleAgain dirNames modNames =
   let
     dict =
       List.foldr
         (\mod dict ->
           let
-            pkg =
-              pkgName mod
+            dir =
+              dirName mod
           in
             Dict.update
-              pkg
+              dir
               (\value ->
                 case value of
                   Just list ->
@@ -180,11 +200,11 @@ sortModuleAgain pkgNames modNames =
         Dict.empty
         modNames
 
-    pkgList =
-      List.filterMap (flip Dict.get dict) pkgNames
+    dirList =
+      List.filterMap (flip Dict.get dict) dirNames
 
   in
-    List.concatMap identity pkgList
+    List.concatMap identity dirList
 
 
 makeModuleGraph : List (String, List (String, Bool)) -> Graph String ()
@@ -219,21 +239,21 @@ makePackageGraph :
     , Dict (String, String) (List (String, String))
     )
   -> Graph String (List (String, String))
-makePackageGraph (packages, deps) =
+makePackageGraph (directories, deps) =
   let
-    packagesWithIndex =
-      List.indexedMap (\id (pkg, _) -> (id, pkg)) (Dict.toList packages)
+    directoriesWithIndex =
+      List.indexedMap (\id (dir, _) -> (id, dir)) (Dict.toList directories)
 
-    pkgToId =
-      Dict.fromList (List.map (\(id, pkg) -> (pkg, id)) packagesWithIndex)
+    dirToId =
+      Dict.fromList (List.map (\(id, dir) -> (dir, id)) directoriesWithIndex)
 
     nodes =
-      List.map (\(id, pkg) -> Node id pkg) packagesWithIndex
+      List.map (\(id, dir) -> Node id dir) directoriesWithIndex
 
     edges =
       List.filterMap
         (\((from, to), label) ->
-          case (Dict.get from pkgToId, Dict.get to pkgToId) of
+          case (Dict.get from dirToId, Dict.get to dirToId) of
             (Just fromId, Just toId) ->
               Just (Edge fromId toId label)
 
