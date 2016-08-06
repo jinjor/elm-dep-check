@@ -1,6 +1,6 @@
 {
   "name": "elm-dep-check",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Visualizing module dependencies of your Elm project",
   "main": "index.js",
   "bin": "./bin/elm-dep-check",
