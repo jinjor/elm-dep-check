@@ -230,7 +230,7 @@ sortModuleAgain dirNames modNames =
                     Just (mod :: list)
 
                   Nothing ->
-                    Just []
+                    Just [mod]
               )
               dict
         )

@@ -1,4 +1,4 @@
 node_modules
 elm-stuff
-
+test/tests.js
 dep-check.html
