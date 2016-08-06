@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/jinjor/elm-dep-check",
   "dependencies": {
+    "argv": "0.0.2",
     "recursive-readdir": "^2.0.0",
     "slash": "^1.0.0"
   }
