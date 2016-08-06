@@ -3,39 +3,53 @@ var slash = require('slash');
 var recursive = require('recursive-readdir');
 var path = require('path');
 
-if(!fs.existsSync('./elm-package.json')) {
-  throw "elm-package.json does not exist in current directory";
+function report(options) {
+  options = Object.assign({}, {
+    output: './dep-check.html'
+  }, options || {})
+  analyze(getProjectInfo().srcDirs).then((data) => {
+    fs.writeFileSync(options.output, data);
+  }).catch((e) => {
+    console.log(e);
+    throw e;
+  });
 }
-var elmPackageJson = JSON.parse(fs.readFileSync('./elm-package.json', 'utf8'));
 
-var sourceDirectories = elmPackageJson['source-directories'];
-if(!sourceDirectories) {
-  throw "source-directories is not defined in elm-package.json";
-}
+function getProjectInfo() {
+  if(!fs.existsSync('./elm-package.json')) {
+    throw 'elm-package.json does not exist in current directory';
+  }
+  var elmPackageJson = JSON.parse(fs.readFileSync('./elm-package.json', 'utf8'));
 
-var cwd = process.cwd();
-var srcDirs = sourceDirectories.map((dir) => {
-  return path.normalize(cwd + '/' + dir);
-});
+  var sourceDirectories = elmPackageJson['source-directories'];
+  if(!sourceDirectories) {
+    throw '"source-directories" is not defined in elm-package.json';
+  }
 
-var outputFileName = './dep-check.html';
+  var cwd = process.cwd();
+  var srcDirs = sourceDirectories.map((dir) => {
+    return path.normalize(cwd + '/' + dir);
+  });
 
-getDeps(srcDirs).then((allDeps) => {
-  var data = {
-    deps: allDeps
+  return {
+    srcDirs: srcDirs
   };
-  var depCheckSource = fs.readFileSync(__dirname + '/dest/dep-check.js', 'utf8');
-  var template = fs.readFileSync(__dirname + '/dest/template.html', 'utf8');
-  var output = template
-    .replace(/{{src}}/, depCheckSource)
-    .replace(/{{data}}/, JSON.stringify(data));
-  return Promise.resolve(output);
-}).then((output) => {
-  fs.writeFileSync(outputFileName, output);
-}).catch((e) => {
-  console.log(e);
-  throw e;
-});
+
+}
+
+function analyze(srcDirs) {
+  return getDeps(srcDirs).then((allDeps) => {
+    var data = {
+      deps: allDeps
+    };
+    var depCheckSource = fs.readFileSync(__dirname + '/dest/dep-check.js', 'utf8');
+    var template = fs.readFileSync(__dirname + '/dest/template.html', 'utf8');
+    var output = template
+      .replace(/{{src}}/, depCheckSource)
+      .replace(/{{data}}/, JSON.stringify(data));
+    return Promise.resolve(output);
+  });
+}
 
 function getDeps(srcDirs) {
   return Promise.all(srcDirs.map(getDepsEach)).then((depsList) => {
@@ -83,3 +97,7 @@ function getImports(code) {
     return name;
   });
 }
+
+module.exports = {
+  report: report
+};
