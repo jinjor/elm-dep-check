@@ -7,7 +7,7 @@ import Model exposing (..)
 import View
 
 type alias Flags =
-  { deps : List (String, List (String, Bool))
+  { deps : List (String, List String)
   }
 
 

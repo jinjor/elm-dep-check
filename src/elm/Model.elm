@@ -8,7 +8,7 @@ import Graph exposing (..)
 
 
 type alias Model =
-  { deps : List (String, List (String, Bool))
+  { deps : List (String, List String)
   , dirLabelLength : Int
   , dirNames : List String
   , dirBody : List (String, List ((Int, Int), Bool))
@@ -24,23 +24,23 @@ type Msg
   | LeaveCell
 
 
-init : List (String, List (String, Bool)) -> (Model, Cmd Msg)
+init : List (String, List String) -> (Model, Cmd Msg)
 init deps =
   let
     modGraph =
       makeModuleGraph deps
 
-    set =
-      createSet deps
+    modRelation =
+      makeModRelation deps
 
     modNames =
       sort modGraph
 
     (directories, dirDeps) =
-      createPackageDeps deps
+      makeDirectoryDeps deps
 
     dirGraph =
-      makePackageGraph (directories, dirDeps)
+      makeDirectoryGraph (directories, dirDeps)
 
     dirNames =
       sort dirGraph
@@ -48,30 +48,17 @@ init deps =
     groupedModNames =
       sortModuleAgain dirNames modNames
 
-    dirIndexOf mod imp =
-      ( indexOf (dirName mod) dirNames
-      , indexOf (dirName imp) dirNames
-      )
-
     modBody =
-      List.map (\mod ->
-        (mod, List.map (\imp ->
-          (dirIndexOf mod imp, Set.member (mod, imp) set)
-        ) groupedModNames)
-      ) groupedModNames
+      makeModBody dirNames modRelation groupedModNames
 
     modLabelLength =
-      (List.foldl Basics.max 0 (List.map String.length modNames)) * 15
+      maxPxLengthOfNames modNames
 
     dirBody =
-      List.map (\mod ->
-        (mod, List.map (\imp ->
-          ((0, 0), mod /= imp && Dict.member (mod, imp) dirDeps)
-        ) dirNames)
-      ) dirNames
+      makeDirBody dirDeps dirNames
 
     dirLabelLength =
-      (List.foldl Basics.max 0 (List.map String.length dirNames)) * 15
+      maxPxLengthOfNames dirNames
   in
     { deps = deps
     , dirLabelLength = dirLabelLength
@@ -82,6 +69,16 @@ init deps =
     , modBody = modBody
     , hover = Nothing
     } ! []
+
+
+maxPxLengthOfNames : List String -> Int
+maxPxLengthOfNames names =
+  maxLengthOfNames names * 15
+
+
+maxLengthOfNames : List String -> Int
+maxLengthOfNames names =
+  List.foldl Basics.max 0 (List.map String.length names)
 
 
 indexOf : a -> List a -> Int
@@ -100,21 +97,61 @@ indexOfHelp index a list =
         indexOfHelp (index + 1) a xs
 
 
-createSet : List (String, List (String, Bool)) -> Set (String, String)
-createSet deps =
-  List.foldl (\(mod, imps) set ->
-    List.foldl (\(imp, mine) set ->
-      (if mine then Set.insert (mod, imp) else identity) set
-    ) set imps
-  ) Set.empty deps
+makeModBody : List String -> Set (String, String) -> List String -> List (String, List ((Int, Int), Bool))
+makeModBody dirNames modRelation modNames =
+  let
+    dirIndexOf mod imp =
+      ( indexOf (dirName mod) dirNames
+      , indexOf (dirName imp) dirNames
+      )
+  in
+    List.map (\mod ->
+      (mod, List.map (\imp ->
+        (dirIndexOf mod imp, Set.member (mod, imp) modRelation)
+      ) modNames)
+    ) modNames
 
 
-createPackageDeps : List (String, List (String, Bool))
+makeDirBody : Dict (String, String) (List (String, String)) -> List String -> List (String, List ((Int, Int), Bool))
+makeDirBody dirDeps dirNames =
+  List.map (\mod ->
+    (mod, List.map (\imp ->
+      ((0, 0), mod /= imp && Dict.member (mod, imp) dirDeps)
+    ) dirNames)
+  ) dirNames
+
+
+makeModRelation : List (String, List String) -> Set (String, String)
+makeModRelation deps =
+  let
+    modSet =
+      Set.fromList (List.map fst deps)
+
+  in
+    Set.fromList <|
+      List.concatMap
+        (\(mod, imps) ->
+          List.filterMap
+            (\imp ->
+              if Set.member imp modSet then
+                Just (mod, imp)
+              else
+                Nothing
+            )
+            imps
+        )
+        deps
+
+
+makeDirectoryDeps : List (String, List String)
   -> ( Dict String (List String)
      , Dict (String, String) (List (String, String))
      )
-createPackageDeps deps =
+makeDirectoryDeps deps =
   let
+    modSet =
+      Set.fromList (List.map fst deps)
+
     directories =
       List.foldl (\(mod, _) dict ->
         let
@@ -134,18 +171,18 @@ createPackageDeps deps =
     dirDeps =
       List.foldl (\(mod, imps) dict ->
         let
-          modPkg =
+          modDir =
             dirName mod
         in
           List.foldl
-            (\(imp, mine) dict ->
+            (\imp dict ->
               let
-                impPkg =
+                impDir =
                   dirName imp
               in
-                (if mine && modPkg /= impPkg then
+                (if Set.member imp modSet && modDir /= impDir then
                   Dict.update
-                    (modPkg, impPkg)
+                    (modDir, impDir)
                     (\value ->
                       case value of
                         Just list -> Just ((mod, imp) :: list)
@@ -207,7 +244,7 @@ sortModuleAgain dirNames modNames =
     List.concatMap identity dirList
 
 
-makeModuleGraph : List (String, List (String, Bool)) -> Graph String ()
+makeModuleGraph : List (String, List String) -> Graph String ()
 makeModuleGraph deps =
   let
     depsWithId =
@@ -221,7 +258,7 @@ makeModuleGraph deps =
       List.foldl
         (\(id, (mod, imps)) (nodes, edges) ->
           ( Node id mod :: nodes
-          , List.filterMap (\(imp, _) ->
+          , List.filterMap (\imp ->
                 case Dict.get imp dict of
                   Just impId -> Just (Edge id impId ())
                   Nothing -> Nothing
@@ -234,12 +271,12 @@ makeModuleGraph deps =
     Graph.fromNodesAndEdges nodes edges
 
 
-makePackageGraph :
+makeDirectoryGraph :
     ( Dict String (List String)
     , Dict (String, String) (List (String, String))
     )
   -> Graph String (List (String, String))
-makePackageGraph (directories, deps) =
+makeDirectoryGraph (directories, deps) =
   let
     directoriesWithIndex =
       List.indexedMap (\id (dir, _) -> (id, dir)) (Dict.toList directories)

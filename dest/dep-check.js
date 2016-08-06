@@ -10177,7 +10177,7 @@ var _elm_lang$html$Html_Lazy$lazy3 = _elm_lang$virtual_dom$VirtualDom$lazy3;
 var _elm_lang$html$Html_Lazy$lazy2 = _elm_lang$virtual_dom$VirtualDom$lazy2;
 var _elm_lang$html$Html_Lazy$lazy = _elm_lang$virtual_dom$VirtualDom$lazy;
 
-var _user$project$Model$makePackageGraph = function (_p0) {
+var _user$project$Model$makeDirectoryGraph = function (_p0) {
 	var _p1 = _p0;
 	var directoriesWithIndex = A2(
 		_elm_lang$core$List$indexedMap,
@@ -10242,27 +10242,26 @@ var _user$project$Model$makeModuleGraph = function (deps) {
 		F2(
 			function (_p15, _p14) {
 				var _p16 = _p15;
-				var _p21 = _p16._0;
+				var _p19 = _p16._0;
 				var _p17 = _p14;
 				return {
 					ctor: '_Tuple2',
 					_0: A2(
 						_elm_lang$core$List_ops['::'],
-						A2(_elm_community$graph$Graph$Node, _p21, _p16._1._0),
+						A2(_elm_community$graph$Graph$Node, _p19, _p16._1._0),
 						_p17._0),
 					_1: A2(
 						_elm_lang$core$Basics_ops['++'],
 						A2(
 							_elm_lang$core$List$filterMap,
-							function (_p18) {
-								var _p19 = _p18;
-								var _p20 = A2(_elm_lang$core$Dict$get, _p19._0, dict);
-								if (_p20.ctor === 'Just') {
+							function (imp) {
+								var _p18 = A2(_elm_lang$core$Dict$get, imp, dict);
+								if (_p18.ctor === 'Just') {
 									return _elm_lang$core$Maybe$Just(
 										A3(
 											_elm_community$graph$Graph$Edge,
-											_p21,
-											_p20._0,
+											_p19,
+											_p18._0,
 											{ctor: '_Tuple0'}));
 								} else {
 									return _elm_lang$core$Maybe$Nothing;
@@ -10293,18 +10292,18 @@ var _user$project$Model$sort = function (graph) {
 		_elm_community$graph$Graph$topologicalSort(graph));
 };
 var _user$project$Model$dirName = function (modName) {
-	var _p22 = _elm_lang$core$List$reverse(
+	var _p20 = _elm_lang$core$List$reverse(
 		A2(_elm_lang$core$String$split, '.', modName));
-	if (_p22.ctor === '[]') {
+	if (_p20.ctor === '[]') {
 		return '';
 	} else {
-		if (_p22._1.ctor === '[]') {
+		if (_p20._1.ctor === '[]') {
 			return '';
 		} else {
 			return A2(
 				_elm_lang$core$String$join,
 				'.',
-				_elm_lang$core$List$reverse(_p22._1));
+				_elm_lang$core$List$reverse(_p20._1));
 		}
 	}
 };
@@ -10319,10 +10318,10 @@ var _user$project$Model$sortModuleAgain = F2(
 						_elm_lang$core$Dict$update,
 						dir,
 						function (value) {
-							var _p23 = value;
-							if (_p23.ctor === 'Just') {
+							var _p21 = value;
+							if (_p21.ctor === 'Just') {
 								return _elm_lang$core$Maybe$Just(
-									A2(_elm_lang$core$List_ops['::'], mod, _p23._0));
+									A2(_elm_lang$core$List_ops['::'], mod, _p21._0));
 							} else {
 								return _elm_lang$core$Maybe$Just(
 									_elm_lang$core$Native_List.fromArray(
@@ -10339,110 +10338,133 @@ var _user$project$Model$sortModuleAgain = F2(
 			dirNames);
 		return A2(_elm_lang$core$List$concatMap, _elm_lang$core$Basics$identity, dirList);
 	});
-var _user$project$Model$createPackageDeps = function (deps) {
-	var dirDeps = A3(
-		_elm_lang$core$List$foldl,
-		F2(
-			function (_p24, dict) {
-				var _p25 = _p24;
-				var _p30 = _p25._0;
-				var modPkg = _user$project$Model$dirName(_p30);
-				return A3(
-					_elm_lang$core$List$foldl,
-					F2(
-						function (_p26, dict) {
-							var _p27 = _p26;
-							var _p29 = _p27._0;
-							var impPkg = _user$project$Model$dirName(_p29);
-							return ((_p27._1 && (!_elm_lang$core$Native_Utils.eq(modPkg, impPkg))) ? A2(
-								_elm_lang$core$Dict$update,
-								{ctor: '_Tuple2', _0: modPkg, _1: impPkg},
-								function (value) {
-									var _p28 = value;
-									if (_p28.ctor === 'Just') {
-										return _elm_lang$core$Maybe$Just(
-											A2(
-												_elm_lang$core$List_ops['::'],
-												{ctor: '_Tuple2', _0: _p30, _1: _p29},
-												_p28._0));
-									} else {
-										return _elm_lang$core$Maybe$Just(
-											_elm_lang$core$Native_List.fromArray(
-												[
-													{ctor: '_Tuple2', _0: _p30, _1: _p29}
-												]));
-									}
-								}) : _elm_lang$core$Basics$identity)(dict);
-						}),
-					dict,
-					_p25._1);
-			}),
-		_elm_lang$core$Dict$empty,
-		deps);
+var _user$project$Model$makeDirectoryDeps = function (deps) {
 	var directories = A3(
 		_elm_lang$core$List$foldl,
 		F2(
-			function (_p31, dict) {
-				var _p32 = _p31;
-				var _p34 = _p32._0;
-				var modPkg = _user$project$Model$dirName(_p34);
+			function (_p22, dict) {
+				var _p23 = _p22;
+				var _p25 = _p23._0;
+				var modPkg = _user$project$Model$dirName(_p25);
 				return A3(
 					_elm_lang$core$Dict$update,
 					modPkg,
 					function (value) {
-						var _p33 = value;
-						if (_p33.ctor === 'Just') {
+						var _p24 = value;
+						if (_p24.ctor === 'Just') {
 							return _elm_lang$core$Maybe$Just(
-								A2(_elm_lang$core$List_ops['::'], _p34, _p33._0));
+								A2(_elm_lang$core$List_ops['::'], _p25, _p24._0));
 						} else {
 							return _elm_lang$core$Maybe$Just(
 								_elm_lang$core$Native_List.fromArray(
-									[_p34]));
+									[_p25]));
 						}
 					},
 					dict);
 			}),
 		_elm_lang$core$Dict$empty,
 		deps);
-	return {ctor: '_Tuple2', _0: directories, _1: dirDeps};
-};
-var _user$project$Model$createSet = function (deps) {
-	return A3(
+	var modSet = _elm_lang$core$Set$fromList(
+		A2(_elm_lang$core$List$map, _elm_lang$core$Basics$fst, deps));
+	var dirDeps = A3(
 		_elm_lang$core$List$foldl,
 		F2(
-			function (_p35, set) {
-				var _p36 = _p35;
+			function (_p26, dict) {
+				var _p27 = _p26;
+				var _p29 = _p27._0;
+				var modDir = _user$project$Model$dirName(_p29);
 				return A3(
 					_elm_lang$core$List$foldl,
 					F2(
-						function (_p37, set) {
-							var _p38 = _p37;
-							return (_p38._1 ? _elm_lang$core$Set$insert(
-								{ctor: '_Tuple2', _0: _p36._0, _1: _p38._0}) : _elm_lang$core$Basics$identity)(set);
+						function (imp, dict) {
+							var impDir = _user$project$Model$dirName(imp);
+							return ((A2(_elm_lang$core$Set$member, imp, modSet) && (!_elm_lang$core$Native_Utils.eq(modDir, impDir))) ? A2(
+								_elm_lang$core$Dict$update,
+								{ctor: '_Tuple2', _0: modDir, _1: impDir},
+								function (value) {
+									var _p28 = value;
+									if (_p28.ctor === 'Just') {
+										return _elm_lang$core$Maybe$Just(
+											A2(
+												_elm_lang$core$List_ops['::'],
+												{ctor: '_Tuple2', _0: _p29, _1: imp},
+												_p28._0));
+									} else {
+										return _elm_lang$core$Maybe$Just(
+											_elm_lang$core$Native_List.fromArray(
+												[
+													{ctor: '_Tuple2', _0: _p29, _1: imp}
+												]));
+									}
+								}) : _elm_lang$core$Basics$identity)(dict);
 						}),
-					set,
-					_p36._1);
+					dict,
+					_p27._1);
 			}),
-		_elm_lang$core$Set$empty,
+		_elm_lang$core$Dict$empty,
 		deps);
+	return {ctor: '_Tuple2', _0: directories, _1: dirDeps};
 };
+var _user$project$Model$makeModRelation = function (deps) {
+	var modSet = _elm_lang$core$Set$fromList(
+		A2(_elm_lang$core$List$map, _elm_lang$core$Basics$fst, deps));
+	return _elm_lang$core$Set$fromList(
+		A2(
+			_elm_lang$core$List$concatMap,
+			function (_p30) {
+				var _p31 = _p30;
+				return A2(
+					_elm_lang$core$List$filterMap,
+					function (imp) {
+						return A2(_elm_lang$core$Set$member, imp, modSet) ? _elm_lang$core$Maybe$Just(
+							{ctor: '_Tuple2', _0: _p31._0, _1: imp}) : _elm_lang$core$Maybe$Nothing;
+					},
+					_p31._1);
+			},
+			deps));
+};
+var _user$project$Model$makeDirBody = F2(
+	function (dirDeps, dirNames) {
+		return A2(
+			_elm_lang$core$List$map,
+			function (mod) {
+				return {
+					ctor: '_Tuple2',
+					_0: mod,
+					_1: A2(
+						_elm_lang$core$List$map,
+						function (imp) {
+							return {
+								ctor: '_Tuple2',
+								_0: {ctor: '_Tuple2', _0: 0, _1: 0},
+								_1: (!_elm_lang$core$Native_Utils.eq(mod, imp)) && A2(
+									_elm_lang$core$Dict$member,
+									{ctor: '_Tuple2', _0: mod, _1: imp},
+									dirDeps)
+							};
+						},
+						dirNames)
+				};
+			},
+			dirNames);
+	});
 var _user$project$Model$indexOfHelp = F3(
 	function (index, a, list) {
 		indexOfHelp:
 		while (true) {
-			var _p39 = list;
-			if (_p39.ctor === '[]') {
+			var _p32 = list;
+			if (_p32.ctor === '[]') {
 				return -1;
 			} else {
-				if (_elm_lang$core$Native_Utils.eq(a, _p39._0)) {
+				if (_elm_lang$core$Native_Utils.eq(a, _p32._0)) {
 					return index;
 				} else {
-					var _v21 = index + 1,
-						_v22 = a,
-						_v23 = _p39._1;
-					index = _v21;
-					a = _v22;
-					list = _v23;
+					var _v18 = index + 1,
+						_v19 = a,
+						_v20 = _p32._1;
+					index = _v18;
+					a = _v19;
+					list = _v20;
 					continue indexOfHelp;
 				}
 			}
@@ -10452,85 +10474,70 @@ var _user$project$Model$indexOf = F2(
 	function (a, list) {
 		return A3(_user$project$Model$indexOfHelp, 0, a, list);
 	});
-var _user$project$Model$init = function (deps) {
-	var _p40 = _user$project$Model$createPackageDeps(deps);
-	var directories = _p40._0;
-	var dirDeps = _p40._1;
-	var dirGraph = _user$project$Model$makePackageGraph(
-		{ctor: '_Tuple2', _0: directories, _1: dirDeps});
-	var dirNames = _user$project$Model$sort(dirGraph);
-	var dirIndexOf = F2(
-		function (mod, imp) {
-			return {
-				ctor: '_Tuple2',
-				_0: A2(
-					_user$project$Model$indexOf,
-					_user$project$Model$dirName(mod),
-					dirNames),
-				_1: A2(
-					_user$project$Model$indexOf,
-					_user$project$Model$dirName(imp),
-					dirNames)
-			};
-		});
-	var dirLabelLength = A3(
+var _user$project$Model$makeModBody = F3(
+	function (dirNames, modRelation, modNames) {
+		var dirIndexOf = F2(
+			function (mod, imp) {
+				return {
+					ctor: '_Tuple2',
+					_0: A2(
+						_user$project$Model$indexOf,
+						_user$project$Model$dirName(mod),
+						dirNames),
+					_1: A2(
+						_user$project$Model$indexOf,
+						_user$project$Model$dirName(imp),
+						dirNames)
+				};
+			});
+		return A2(
+			_elm_lang$core$List$map,
+			function (mod) {
+				return {
+					ctor: '_Tuple2',
+					_0: mod,
+					_1: A2(
+						_elm_lang$core$List$map,
+						function (imp) {
+							return {
+								ctor: '_Tuple2',
+								_0: A2(dirIndexOf, mod, imp),
+								_1: A2(
+									_elm_lang$core$Set$member,
+									{ctor: '_Tuple2', _0: mod, _1: imp},
+									modRelation)
+							};
+						},
+						modNames)
+				};
+			},
+			modNames);
+	});
+var _user$project$Model$maxLengthOfNames = function (names) {
+	return A3(
 		_elm_lang$core$List$foldl,
 		_elm_lang$core$Basics$max,
 		0,
-		A2(_elm_lang$core$List$map, _elm_lang$core$String$length, dirNames)) * 15;
-	var dirBody = A2(
-		_elm_lang$core$List$map,
-		function (mod) {
-			return {
-				ctor: '_Tuple2',
-				_0: mod,
-				_1: A2(
-					_elm_lang$core$List$map,
-					function (imp) {
-						return {
-							ctor: '_Tuple2',
-							_0: {ctor: '_Tuple2', _0: 0, _1: 0},
-							_1: (!_elm_lang$core$Native_Utils.eq(mod, imp)) && A2(
-								_elm_lang$core$Dict$member,
-								{ctor: '_Tuple2', _0: mod, _1: imp},
-								dirDeps)
-						};
-					},
-					dirNames)
-			};
-		},
-		dirNames);
-	var set = _user$project$Model$createSet(deps);
+		A2(_elm_lang$core$List$map, _elm_lang$core$String$length, names));
+};
+var _user$project$Model$maxPxLengthOfNames = function (names) {
+	return _user$project$Model$maxLengthOfNames(names) * 15;
+};
+var _user$project$Model$init = function (deps) {
+	var _p33 = _user$project$Model$makeDirectoryDeps(deps);
+	var directories = _p33._0;
+	var dirDeps = _p33._1;
+	var dirGraph = _user$project$Model$makeDirectoryGraph(
+		{ctor: '_Tuple2', _0: directories, _1: dirDeps});
+	var dirNames = _user$project$Model$sort(dirGraph);
+	var dirLabelLength = _user$project$Model$maxPxLengthOfNames(dirNames);
+	var dirBody = A2(_user$project$Model$makeDirBody, dirDeps, dirNames);
+	var modRelation = _user$project$Model$makeModRelation(deps);
 	var modGraph = _user$project$Model$makeModuleGraph(deps);
 	var modNames = _user$project$Model$sort(modGraph);
 	var groupedModNames = A2(_user$project$Model$sortModuleAgain, dirNames, modNames);
-	var modBody = A2(
-		_elm_lang$core$List$map,
-		function (mod) {
-			return {
-				ctor: '_Tuple2',
-				_0: mod,
-				_1: A2(
-					_elm_lang$core$List$map,
-					function (imp) {
-						return {
-							ctor: '_Tuple2',
-							_0: A2(dirIndexOf, mod, imp),
-							_1: A2(
-								_elm_lang$core$Set$member,
-								{ctor: '_Tuple2', _0: mod, _1: imp},
-								set)
-						};
-					},
-					groupedModNames)
-			};
-		},
-		groupedModNames);
-	var modLabelLength = A3(
-		_elm_lang$core$List$foldl,
-		_elm_lang$core$Basics$max,
-		0,
-		A2(_elm_lang$core$List$map, _elm_lang$core$String$length, modNames)) * 15;
+	var modBody = A3(_user$project$Model$makeModBody, dirNames, modRelation, groupedModNames);
+	var modLabelLength = _user$project$Model$maxPxLengthOfNames(modNames);
 	return A2(
 		_elm_lang$core$Platform_Cmd_ops['!'],
 		{deps: deps, dirLabelLength: dirLabelLength, dirNames: dirNames, dirBody: dirBody, modLabelLength: modLabelLength, groupedModNames: groupedModNames, modBody: modBody, hover: _elm_lang$core$Maybe$Nothing},
@@ -11031,15 +11038,7 @@ var _user$project$DepCheck$main = {
 							return {ctor: '_Tuple2', _0: x1, _1: x2};
 						}),
 					_elm_lang$core$Json_Decode$string,
-					_elm_lang$core$Json_Decode$list(
-						A3(
-							_elm_lang$core$Json_Decode$tuple2,
-							F2(
-								function (x1, x2) {
-									return {ctor: '_Tuple2', _0: x1, _1: x2};
-								}),
-							_elm_lang$core$Json_Decode$string,
-							_elm_lang$core$Json_Decode$bool))))),
+					_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string)))),
 		function (deps) {
 			return _elm_lang$core$Json_Decode$succeed(
 				{deps: deps});
