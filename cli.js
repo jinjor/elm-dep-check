@@ -4,7 +4,7 @@ argv.option({
 	name: 'output',
 	short: 'o',
 	type : 'string',
-	description : 'output file, default is `./dep-check.html`',
+	description : 'Output file (default is `dep-check.html`)',
 	example: "'elm-dep-check --output=report.html' or 'elm-dep-check -o report.html"
 });
 

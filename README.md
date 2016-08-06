@@ -1,5 +1,7 @@
 # elm-dep-check
 
+[![Build Status](https://travis-ci.org/jinjor/elm-dep-check.svg)](https://travis-ci.org/jinjor/elm-dep-check)
+
 Visualizing module dependencies of Elm projects.
 
 ![](image.png)
@@ -30,6 +32,20 @@ elm-dep-check
 
 This creates `dep-check.html` in the current directory.
 
+About other options, see below.
+
+```
+Usage: elm-dep-check [options]
+
+	--help, -h
+		Displays help information about this script
+		'elm-dep-check -h' or 'elm-dep-check --help'
+
+	--output, -o
+		Output file (default is `dep-check.html`)
+		'elm-dep-check --output=report.html' or 'elm-dep-check -o report.html
+
+```
 
 ## LICENSE
 

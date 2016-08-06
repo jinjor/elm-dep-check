@@ -1,4 +1,5 @@
 node_modules
 elm-stuff
+npm-debug.log
 test/tests.js
 dep-check.html
